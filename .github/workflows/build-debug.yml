@@ -14,7 +14,21 @@ jobs:
           java-version: 21
       - run: chmod +x gradlew
       - run: ./gradlew assembleDebug --no-daemon
+      - name: Pick one APK
+        run: |
+          mkdir -p out
+          find app/build/outputs/apk -name '*.apk' | grep -vi androidTest > list.txt
+          echo "All APKs found:"
+          cat list.txt
+          f=""
+          for p in "gecko.*arm64" "arm64.*gecko" "gecko.*universal" "universal.*gecko" "gecko" "arm64" "universal"; do
+            f=$(grep -iE "$p" list.txt | head -n1 || true)
+            if [ -n "$f" ]; then break; fi
+          done
+          if [ -z "$f" ]; then f=$(head -n1 list.txt); fi
+          echo "Chosen: $f"
+          cp "$f" out/TVIncognito.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: tvbro-apk
-          path: app/build/outputs/apk/**/*.apk
+          name: tv-incognito-apk
+          path: out/TVIncognito.apk
