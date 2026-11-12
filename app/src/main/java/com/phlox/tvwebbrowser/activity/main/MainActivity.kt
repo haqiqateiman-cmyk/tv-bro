@@ -158,6 +158,9 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // MODIFIED: blank preview in the recent-apps switcher
+        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+
         // MODIFIED: permanently incognito
         if (!config.incognitoMode) config.incognitoMode = true
         val incognitoMode = true
@@ -366,7 +369,7 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
 
         override fun goForward() = controller.goForward()
 
-        override fun goHome() = navigate(settingsModel.homePage)
+        override fun goHome() = navigate("about:blank") // MODIFIED: blank home
 
         override fun reload() = controller.reload()
 
@@ -434,7 +437,11 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
         WebEngineFactory.initialize(this@MainActivity, shell.tabsContainer)
 
         shell.showBusy(true)
+        // MODIFIED: fresh start every time: wipe cookies/cache/storage and forget old tabs and URLs
+        WebEngineFactory.clearIncognitoBrowsingData(this@MainActivity)
         controller.loadState().join()
+        controller.onCloseAllTabs().join()
+        controller.currentTab.value = null
 
         if (!isActive) {
             return@launch
@@ -443,7 +450,8 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
         shell.showBusy(false)
 
         if (intent.data == null) {
-            controller.selectStartTab()
+            // MODIFIED: start on a plain blank page (no home page tiles, no old sites)
+            openInNewTab("about:blank", 0)
         } else {
             handleIntent(intent)
         }
