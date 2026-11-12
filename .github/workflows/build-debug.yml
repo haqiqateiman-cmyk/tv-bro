@@ -12,13 +12,25 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Patch TV screen for blank start page
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          p = pathlib.Path("app/src/main/java/com/phlox/tvwebbrowser/activity/main/TvShell.kt")
+          s = p.read_text()
+          old = "if (currentTab == null || currentTab.url == settingsModel.homePage) {"
+          new = 'if (currentTab == null || currentTab.url.isEmpty() || currentTab.url.startsWith("about:")) {'
+          assert old in s, "onTabsLoaded line not found"
+          s = s.replace(old, new)
+          s = s.replace("settingsModel.homePage", '"about:blank"')
+          p.write_text(s)
+          PY
       - run: chmod +x gradlew
       - run: ./gradlew assembleDebug --no-daemon
       - name: Pick one APK
         run: |
           mkdir -p out
           find app/build/outputs/apk -name '*.apk' | grep -vi androidTest > list.txt
-          echo "All APKs found:"
           cat list.txt
           f=""
           for p in "gecko.*arm64" "arm64.*gecko" "gecko.*universal" "universal.*gecko" "gecko" "arm64" "universal"; do
