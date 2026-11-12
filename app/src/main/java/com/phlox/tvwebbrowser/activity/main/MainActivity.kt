@@ -70,6 +70,8 @@ import kotlin.system.exitProcess
 /**
  * The browser screen. It owns what does not depend on the look of the screen (the browser core,
  * intents, navigation, incognito, downloads, keys and Back) and leaves the look to a [BrowserShell].
+ *
+ * MODIFIED: permanently incognito (incognito is forced on at start, the toggle is disabled).
  */
 open class MainActivity : AppCompatActivity(), BrowserShell.Host {
     companion object {
@@ -156,7 +158,9 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val incognitoMode = config.incognitoMode
+        // MODIFIED: permanently incognito
+        if (!config.incognitoMode) config.incognitoMode = true
+        val incognitoMode = true
         Log.d(TAG, "onCreate incognitoMode: $incognitoMode")
         if (incognitoMode xor (this is IncognitoModeMainActivity)) {
             switchProcess(incognitoMode, intent)
@@ -455,7 +459,8 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
         }
         //the window of the player was expanded after this activity had been destroyed
         if (intent.getBooleanExtra(KEY_SHOW_PIP_PLAYER, false)) showPictureInPicturePlayer()
-        if (autoUpdateModel.needAutoCheckUpdates &&
+        // MODIFIED: update checks disabled (this is a custom build)
+        if (false && autoUpdateModel.needAutoCheckUpdates &&
             autoUpdateModel.updateChecker.versionCheckResult == null &&
                 !autoUpdateModel.lastUpdateNotificationTime.sameDay(Calendar.getInstance())) {
             autoUpdateModel.checkUpdate(false){
@@ -639,8 +644,9 @@ open class MainActivity : AppCompatActivity(), BrowserShell.Host {
         navigate(url)
     }
 
+    // MODIFIED: permanently incognito, the toggle does nothing
     override fun toggleIncognitoMode() {
-        toggleIncognitoMode(true)
+        // disabled
     }
 
     private fun toggleIncognitoMode(andSwitchProcess: Boolean) = lifecycleScope.launch(Dispatchers.Main) {
